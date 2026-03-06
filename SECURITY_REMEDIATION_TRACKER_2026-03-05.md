@@ -35,6 +35,42 @@ This file tracks all identified issues, remediation plan, test coverage, and com
 - Affected file: `releng/meson_make.py` (producer in `releng/meson_configure.py`)
 - Status: [x] Closed (Group C, `releng` commit `25de252`)
 
+6. High: Missing peer signature verification in manual pairing verification flow
+- Risk: Device peer identity may not be cryptographically authenticated in `verify_manual_pairing`, enabling impersonation/MITM in this path.
+- Affected file:
+  - `subprojects/frida-core/src/fruity/xpc.vala`
+- Status: [ ] Open (Group D)
+
+7. High/Medium: Unsafe extraction and no integrity check for downloaded dependency bundles
+- Risk: Downloaded archives are extracted using `tar.extractall()` without path-safety checks and without content integrity verification.
+- Affected file:
+  - `releng/deps.py`
+- Status: [ ] Open (Group E)
+
+8. Medium: Shell command construction with `shell=True` in releng bundle publishing
+- Risk: `subprocess.run("cfcli purge " + public_url, shell=True)` introduces avoidable command-injection surface.
+- Affected file:
+  - `releng/deps.py`
+- Status: [ ] Open (Group E)
+
+9. Medium: Build-time unsafe deserialization in frida-core compat build helper
+- Risk: `pickle.loads(base64.b64decode(args.state))` executes arbitrary code if `state` is attacker-controlled.
+- Affected file:
+  - `subprojects/frida-core/compat/build.py`
+- Status: [ ] Open (Group F)
+
+10. Medium (Correctness): frida-python Meson test path points to non-existent build directory
+- Risk: test harness imports wrong module path; CI/local test signal is unreliable and currently failing.
+- Affected file:
+  - `subprojects/frida-python/meson.build`
+- Status: [ ] Open (Group G)
+
+11. Medium (Correctness): frida-tools Meson test path assumes nested frida-python subproject layout
+- Risk: top-level superproject test execution fails with `ModuleNotFoundError` due incorrect `PYTHONPATH`.
+- Affected file:
+  - `subprojects/frida-tools/meson.build`
+- Status: [ ] Open (Group G)
+
 ## Remediation Groups
 
 Group A: Injector hardening (`frida-core`)
@@ -64,6 +100,35 @@ Group C: Replace pickle-based env state serialization
   - Migrate `frida-env.dat` to safe JSON schema.
   - Keep compatibility fallback only if needed and documented; otherwise fully remove `pickle.loads` path.
 
+Group D: Pairing verification hardening (`frida-core`)
+- Files:
+  - `subprojects/frida-core/src/fruity/xpc.vala`
+- Strategy:
+  - Implement peer signature verification in `verify_manual_pairing`.
+  - Fail closed and emit pairing failure signal on verification mismatch.
+
+Group E: Dependency bundle fetch/extract hardening (`releng`)
+- Files:
+  - `releng/deps.py`
+- Strategy:
+  - Replace raw `tar.extractall()` with validated/safe extraction that rejects traversal and unsafe link targets.
+  - Eliminate string-concatenated `shell=True` invocation for `cfcli purge`.
+
+Group F: Remove pickle decode path from compat helper (`frida-core`)
+- Files:
+  - `subprojects/frida-core/compat/build.py`
+- Strategy:
+  - Replace pickle-based opaque state channel with safe structured encoding.
+  - Ensure compile-step decoding only accepts constrained schema.
+
+Group G: Restore reliable Python test harness paths (`frida-python` + `frida-tools`)
+- Files:
+  - `subprojects/frida-python/meson.build`
+  - `subprojects/frida-tools/meson.build`
+- Strategy:
+  - Correct `PYTHONPATH` targets for superproject/subproject layout.
+  - Re-run Meson test targets to validate import resolution.
+
 ## Validation Plan
 
 For each group:
@@ -76,6 +141,10 @@ For each group:
 - Commit 1: Group A (injector overflow hardening)
 - Commit 2: Group B (`eval()` hardening in releng)
 - Commit 3: Group C (remove pickle deserialization)
+- Commit 4: Group D (pairing verification hardening in `frida-core`)
+- Commit 5: Group E (bundle extraction and shell invocation hardening in `releng`)
+- Commit 6: Group F (remove `pickle.loads` path in `frida-core/compat`)
+- Commit 7: Group G (Python test harness path fixes in `frida-python` + `frida-tools`)
 
 Each commit will include:
 - Changed files only for its group.
