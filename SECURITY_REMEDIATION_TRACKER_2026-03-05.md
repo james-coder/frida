@@ -39,37 +39,39 @@ This file tracks all identified issues, remediation plan, test coverage, and com
 - Risk: Device peer identity may not be cryptographically authenticated in `verify_manual_pairing`, enabling impersonation/MITM in this path.
 - Affected file:
   - `subprojects/frida-core/src/fruity/xpc.vala`
-- Status: [ ] Open (Group D)
+- Status: [x] Closed (Group D, `frida-core` commit `9876958`)
 
 7. High/Medium: Unsafe extraction and no integrity check for downloaded dependency bundles
 - Risk: Downloaded archives are extracted using `tar.extractall()` without path-safety checks and without content integrity verification.
 - Affected file:
   - `releng/deps.py`
-- Status: [ ] Open (Group E)
+- Status: [x] Closed (Group E, `releng` commit `52020af`)
 
 8. Medium: Shell command construction with `shell=True` in releng bundle publishing
 - Risk: `subprocess.run("cfcli purge " + public_url, shell=True)` introduces avoidable command-injection surface.
 - Affected file:
   - `releng/deps.py`
-- Status: [ ] Open (Group E)
+- Status: [x] Closed (Group E, `releng` commit `52020af`)
 
 9. Medium: Build-time unsafe deserialization in frida-core compat build helper
 - Risk: `pickle.loads(base64.b64decode(args.state))` executes arbitrary code if `state` is attacker-controlled.
 - Affected file:
   - `subprojects/frida-core/compat/build.py`
-- Status: [ ] Open (Group F)
+- Status: [x] Closed (Group F, `frida-core` commit `953fa18`)
 
 10. Medium (Correctness): frida-python Meson test path points to non-existent build directory
 - Risk: test harness imports wrong module path; CI/local test signal is unreliable and currently failing.
 - Affected file:
   - `subprojects/frida-python/meson.build`
-- Status: [ ] Open (Group G)
+  - `subprojects/frida-python/frida/_frida/__init__.py`
+  - `subprojects/frida-python/frida/_frida/meson.build`
+- Status: [x] Closed (Group G, `frida-python` commit `54e9ed5`)
 
 11. Medium (Correctness): frida-tools Meson test path assumes nested frida-python subproject layout
 - Risk: top-level superproject test execution fails with `ModuleNotFoundError` due incorrect `PYTHONPATH`.
 - Affected file:
   - `subprojects/frida-tools/meson.build`
-- Status: [ ] Open (Group G)
+- Status: [x] Closed (Group G, `frida-tools` commit `d24d24d`)
 
 ## Remediation Groups
 
@@ -165,3 +167,24 @@ Each commit will include:
   - Repo: `james-coder/releng`
   - Commit: `25de252`
   - Checks: `py_compile` on modified modules and JSON env-state round-trip smoke test.
+- Group D completed in submodule:
+  - Repo: `james-coder/frida-core`
+  - Commit: `9876958`
+  - Checks: targeted rebuild of `subprojects/frida-core/src/libfrida-core.a` after signature verification changes.
+- Group E completed in submodule:
+  - Repo: `james-coder/releng`
+  - Commit: `52020af`
+  - Checks: `py_compile` and smoke test proving malicious tar traversal entry is rejected by hardened extraction.
+- Group F completed in submodule:
+  - Repo: `james-coder/frida-core`
+  - Commit: `953fa18`
+  - Checks: `py_compile` and encode/decode round-trip smoke test for JSON state serialization.
+- Group G completed in submodules:
+  - Repo: `james-coder/frida-python`
+  - Commit: `54e9ed5`
+  - Repo: `james-coder/frida-tools`
+  - Commit: `d24d24d`
+  - Checks: Meson `ninja -C build test` no longer fails with original frida import-path errors.
+  - Residual failures in this environment are unrelated to path wiring:
+    - missing Python dependency `colorama` for `frida-tools` tests,
+    - existing `tests.test_rpc.TestRpc.test_basics` runtime failure in `frida-python`.
