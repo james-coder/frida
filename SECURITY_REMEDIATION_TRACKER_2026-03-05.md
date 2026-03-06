@@ -28,7 +28,7 @@ This file tracks all identified issues, remediation plan, test coverage, and com
   - `releng/machine_file.py`
   - `releng/env_generic.py`
   - `releng/deps.py`
-- Status: [ ] Open (Group B pending superproject pointer update)
+- Status: [x] Closed (Group B, `releng` commit `9ffc1cb`)
 
 5. Low/Medium: Build-time unsafe deserialization from `pickle.loads`
 - Risk: `pickle.loads` on attacker-controlled `builddir/frida-env.dat` can execute arbitrary code.
@@ -88,3 +88,7 @@ Each commit will include:
   - Repo: `james-coder/frida-core`
   - Commit: `352f699`
   - Checks: attempted `meson` build smoke (blocked by missing `valac`), plus targeted static validation for removed unsafe copy/assert pattern in affected files.
+- Group B completed in submodule:
+  - Repo: `james-coder/releng`
+  - Commit: `9ffc1cb`
+  - Checks: `py_compile` on modified modules and evaluator smoke tests for representative `deps.toml` condition/meson expression forms.
