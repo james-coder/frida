@@ -33,7 +33,7 @@ This file tracks all identified issues, remediation plan, test coverage, and com
 5. Low/Medium: Build-time unsafe deserialization from `pickle.loads`
 - Risk: `pickle.loads` on attacker-controlled `builddir/frida-env.dat` can execute arbitrary code.
 - Affected file: `releng/meson_make.py` (producer in `releng/meson_configure.py`)
-- Status: [ ] Open (Group C pending superproject pointer update)
+- Status: [x] Closed (Group C, `releng` commit `25de252`)
 
 ## Remediation Groups
 
@@ -92,3 +92,7 @@ Each commit will include:
   - Repo: `james-coder/releng`
   - Commit: `9ffc1cb`
   - Checks: `py_compile` on modified modules and evaluator smoke tests for representative `deps.toml` condition/meson expression forms.
+- Group C completed in submodule:
+  - Repo: `james-coder/releng`
+  - Commit: `25de252`
+  - Checks: `py_compile` on modified modules and JSON env-state round-trip smoke test.
